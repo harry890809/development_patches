@@ -1,0 +1,130 @@
+diff --git a/drivers/power/qpnp-fg.c b/drivers/power/qpnp-fg.c
+index 711c343..c78c827 100644
+--- a/drivers/power/qpnp-fg.c
++++ b/drivers/power/qpnp-fg.c
+@@ -38,7 +38,12 @@
+ #include <linux/fs.h>
+ #include <linux/qpnp/qpnp-revid.h>
+ #include <linux/switch.h>
++/*jiahao add for usb connector state debug @2017-05-22 start*/
++#include <linux/thermal.h>
+ 
++#define USB_CONNECTOR_STATE_DEBUG
++
++/*jiahao add for usb connector state debug @2017-05-22 end*/
+ 
+ /* Register offsets */
+ 
+@@ -2923,6 +2928,87 @@ enum sw_jeita_status {
+ #define BATT_SW_JEITA_HOT		600
+ static int set_prop_sw_jeita_vol_cur(struct fg_chip *chip, int vol_mv, int cur_ma);
+ #endif
++
++/*jiahao add for usb connector state debug @2017-05-22 start*/
++#ifdef USB_CONNECTOR_STATE_DEBUG
++#define USB_CONNECTOR_TEMP_WARN 80
++#define USB_CONNECTOR_TEMP_NORMAL 60
++struct switch_dev usb_connector_dev;
++
++static int create_usb_connector(void)
++{
++        int ret;
++
++        usb_connector_dev.name = "usb_connector";
++        usb_connector_dev.state = 0;
++
++        ret = switch_dev_register(&usb_connector_dev);
++        if (ret < 0)
++               return ret;
++
++	printk("[USB_STATE] create usb_connector device\n");
++        return 0;
++}
++
++static int update_usb_connector_state(void)
++{
++
++        static int state, pre_state;
++	int ret;
++        struct thermal_zone_device *usb_connector_device;
++        long temperature;
++
++        usb_connector_device = thermal_zone_get_zone_by_name("pa_therm1");
++
++        ret = thermal_zone_get_temp(usb_connector_device, &temperature);
++
++
++        if (ret)
++                return ret;
++
++        if(temperature > USB_CONNECTOR_TEMP_WARN)
++	{
++		state = 1;
++		pre_state = state;
++		printk("[USB_STATE] temperature is %ld above %d, and set the state to %d\n", temperature, USB_CONNECTOR_TEMP_WARN, state);
++	}
++        else if((temperature <= USB_CONNECTOR_TEMP_WARN) && (temperature > USB_CONNECTOR_TEMP_NORMAL))
++	{
++		if(pre_state == 1)
++		{
++			state = 1;
++			pre_state = state;
++			printk("[USB_STATE] temperature is %ld and decrease from %d ,keep the state to %d\n", temperature, USB_CONNECTOR_TEMP_WARN, state);
++		}
++		else
++		{
++			printk("[USB_STATE] temperature is %ld and going to increase, do not change the state\n", temperature);
++		}
++	}
++	else if(temperature <= USB_CONNECTOR_TEMP_NORMAL)
++	{
++		if(pre_state == 1)
++		{
++			state = 0;
++			pre_state = state;
++			printk("[USB_STATE] temperature is %ld and decrease from %d, should set the state to %d\n", temperature, USB_CONNECTOR_TEMP_WARN, state);
++		}
++		else
++		{
++			state = 0;
++			pre_state = state;
++			printk("[USB_STATE] temperature is %ld, do not change the state\n", temperature);
++		}
++	}
++
++        switch_set_state(&usb_connector_dev, state);
++
++        return 0;
++}
++
++#endif
++/*jiahao add for usb connector state debug @2017-05-22 end*/
++
+ static void update_temp_data(struct work_struct *work)
+ {
+ 	s16 temp;
+@@ -2943,6 +3029,11 @@ static void update_temp_data(struct work_struct *work)
+ 		goto resched;
+ 
+ 	fg_stay_awake(&chip->update_temp_wakeup_source);
++/*jiahao add for usb connector state debug @2017-05-22 start*/
++#ifdef USB_CONNECTOR_STATE_DEBUG
++	update_usb_connector_state();
++#endif
++/*jiahao add for usb connector state debug @2017-05-22 end*/
+ 	if (chip->sw_rbias_ctrl) {
+ 		rc = fg_mem_masked_write(chip, EXTERNAL_SENSE_SELECT,
+ 				BATT_TEMP_CNTRL_MASK,
+@@ -9183,7 +9274,11 @@ static int fg_probe(struct spmi_device *spmi)
+ 		chip->pmic_subtype);
+ 	
+ 	init_proc_charger_limit();	//byr add for demo app
+-
++/*jiahao add for usb connector state debug @2017-05-22 start*/
++#ifdef USB_CONNECTOR_STATE_DEBUG
++	create_usb_connector();
++#endif
++/*jiahao add for usb connector state debug @2017-05-22 end*/
+ 	return rc;
+ 
+ power_supply_unregister:
