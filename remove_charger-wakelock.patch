@@ -1,0 +1,74 @@
+From 276d335802d4e9f7e9addc53f804ceee2c227e1c Mon Sep 17 00:00:00 2001
+From: H2404977 <harry.h.jia@mail.foxconn.com>
+Date: Thu, 2 Jun 2016 10:11:48 +0800
+Subject: [PATCH] [C5F-14]:Remove wake lock for CTA branch
+
+---
+ drivers/power/qpnp-smbcharger.c |   16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/power/qpnp-smbcharger.c b/drivers/power/qpnp-smbcharger.c
+index f3cfe29..676ca84 100755
+--- a/drivers/power/qpnp-smbcharger.c
++++ b/drivers/power/qpnp-smbcharger.c
+@@ -39,7 +39,7 @@
+ #include <linux/msm_bcl.h>
+ #include <linux/ktime.h>
+ #include "pmic-voter.h"
+-#include <linux/wakelock.h>		//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
++//#include <linux/wakelock.h>		//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
+ 
+ /*ZZDC-SW-BSP*****Add for DQA test by harry @2016-03-16*****begin*/
+ char *charging_stage = "none";
+@@ -109,7 +109,7 @@ struct smbchg_chip {
+ 	struct device			*dev;
+ 	struct spmi_device		*spmi;
+ 	int				schg_version;
+-	struct wake_lock wakelock;	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
++	//struct wake_lock wakelock;	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
+ 	/* peripheral register address bases */
+ 	u16				chgr_base;
+ 	u16				bat_if_base;
+@@ -4701,8 +4701,8 @@ static void handle_usb_removal(struct smbchg_chip *chip)
+ 	pr_smb(PR_MISC, "setting usb psy health UNKNOWN\n");
+ 
+ 	/*ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13*****begin*/	
+-	pr_smb(PR_STATUS, "Remove charger wake lock\n");
+-	wake_unlock(&chip->wakelock);	
++	//pr_smb(PR_STATUS, "Remove charger wake lock\n");
++	//wake_unlock(&chip->wakelock);	
+ 	/*ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13*****end*/	
+ 	rc = power_supply_set_health_state(chip->usb_psy,
+ 			POWER_SUPPLY_HEALTH_UNKNOWN);
+@@ -4791,8 +4791,8 @@ static void handle_usb_insertion(struct smbchg_chip *chip)
+ 	}
+ 	schedule_work(&chip->usb_set_online_work);
+ /*ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13*****begin*/	
+-	pr_smb(PR_STATUS, "Add charger wake lock\n");
+-	wake_lock(&chip->wakelock);
++	//pr_smb(PR_STATUS, "Add charger wake lock\n");
++	//wake_lock(&chip->wakelock);
+ /*ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13*****end*/ 
+ 
+ 
+@@ -8084,7 +8084,7 @@ static int smbchg_probe(struct spmi_device *spmi)
+ 	mutex_init(&chip->usb_status_lock);
+ 	device_init_wakeup(chip->dev, true);
+ 	
+-	wake_lock_init(&chip->wakelock, WAKE_LOCK_SUSPEND, "CHARGER_WAKE_LOCK");	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
++	//wake_lock_init(&chip->wakelock, WAKE_LOCK_SUSPEND, "CHARGER_WAKE_LOCK");	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
+ 
+ 	rc = smbchg_parse_peripherals(chip);
+ 	if (rc) {
+@@ -8215,7 +8215,7 @@ unregister_batt_psy:
+ 	power_supply_unregister(&chip->batt_psy);
+ out:
+ 	handle_usb_removal(chip);
+-	wake_lock_destroy(&chip->wakelock);	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
++	//wake_lock_destroy(&chip->wakelock);	//ZZDC-SW-BSP*****Add for C5F-445 by harry @2016-05-13
+ 	return rc;
+ }
+ 
+-- 
+1.7.9.5
+
