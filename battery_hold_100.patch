@@ -1,0 +1,46 @@
+diff --git a/drivers/misc/mediatek/include/mt-plat/battery_common.h b/drivers/misc/mediatek/include/mt-plat/battery_common.h
+index 1635255..372c540 100644
+--- a/drivers/misc/mediatek/include/mt-plat/battery_common.h
++++ b/drivers/misc/mediatek/include/mt-plat/battery_common.h
+@@ -27,6 +27,7 @@
+ #define MAX_PreCC_CHARGING_TIME             (1*30*60)/* 0.5hr */
+ #define MAX_TOP_CHARGING_TIME               (1*45*60)/* 45min */
+ #define MAX_CV_CHARGING_TIME                (3*60*60)/* 3hr */
++#define HOLD_FULL_TIME                      (1*5*60)/* 5min */
+ #define MUTEX_TIMEOUT                       (5000)
+ #define BAT_TASK_PERIOD                     (10)/* 10sec */
+ #define g_free_bat_temp                     (1000)/* 1 s */
+diff --git a/drivers/power/mediatek/battery_common.c b/drivers/power/mediatek/battery_common.c
+index 0b04b1e..af228f8 100644
+--- a/drivers/power/mediatek/battery_common.c
++++ b/drivers/power/mediatek/battery_common.c
+@@ -1911,6 +1911,14 @@ static void mt_battery_Sync_UI_Percentage_to_Real(void)
+ 
+ 	if ((BMT_status.UI_SOC > BMT_status.SOC) && ((BMT_status.UI_SOC != 1))) {
+ #if !defined(SYNC_UI_SOC_IMM)
++		if (BMT_status.UI_SOC == 100) {
++			if (timer_counter == HOLD_FULL_TIME / BAT_TASK_PERIOD) {
++				timer_counter = batt_cust_data.sync_to_real_tracking_time / BAT_TASK_PERIOD;
++			} else {
++				timer_counter++;
++				return;
++			}
++		}
+ 		/* reduce after xxs */
+ 		if (chr_wake_up_bat == KAL_FALSE) {
+ 			if (timer_counter ==
+diff --git a/drivers/power/mediatek/switch_charging.c b/drivers/power/mediatek/switch_charging.c
+index 87787c9..dbc73c3 100644
+--- a/drivers/power/mediatek/switch_charging.c
++++ b/drivers/power/mediatek/switch_charging.c
+@@ -1250,8 +1250,8 @@ PMU_STATUS BAT_BatteryFullAction(void)
+ 	charging_enable = KAL_FALSE;
+ 	battery_charging_control(CHARGING_CMD_ENABLE, &charging_enable);
+ 	//if (charging_full_check() == KAL_FALSE) {
+-	if ( BMT_status.bat_vol < batt_cust_data.recharging_voltage){
+-		battery_log(0, "[BATTERY] Battery entery Re-charging,recharging_voltage=%d!\n\r",batt_cust_data.recharging_voltage);
++	if (BMT_status.bat_vol < batt_cust_data.recharging_voltage || BMT_status.SOC <= 95) {
++		battery_log(0, "[BATTERY] Battery entery Re-charging,recharging_voltage=%d! recharging soc=%d\n\r",batt_cust_data.recharging_voltage, BMT_status.SOC);
+ 		BMT_status.bat_in_recharging_state = KAL_TRUE;
+ 		BMT_status.bat_charging_state = CHR_CC;
+ #ifndef CONFIG_MTK_HAFG_20
