@@ -10,3 +10,5 @@ All My Useful Patches
 第三次提交，新增联想项目打印Battery ID patch
 
 第四次提交，新增Asus项目USB State节点 patch
+
+第五次提交，新增工厂模式电流测试patch

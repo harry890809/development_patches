@@ -1,0 +1,43 @@
+diff --git a/arch/arm/boot/dts/qcom/msm-pmi8940.dtsi b/arch/arm/boot/dts/qcom/msm-pmi8940.dtsi
+index 7c8daf6..6212f7b 100644
+--- a/arch/arm/boot/dts/qcom/msm-pmi8940.dtsi
++++ b/arch/arm/boot/dts/qcom/msm-pmi8940.dtsi
+@@ -175,6 +175,8 @@
+ 
+ 			qcom,iterm-ma = <100>;
+ 			qcom,float-voltage-mv = <4380>;
++			qcom,vchg_sns-vadc = <&pmi8940_vadc>;
++                        qcom,vchg-adc-channel-id = <3>;
+ 			qcom,resume-delta-mv = <200>;
+ 			qcom,chg-inhibit-fg;
+ 			qcom,rparasitic-uohm = <100000>;
+diff --git a/arch/arm/boot/dts/qcom/msm8917-pmi8940-mtp.dtsi b/arch/arm/boot/dts/qcom/msm8917-pmi8940-mtp.dtsi
+index 819cb1d..f8fc4a3 100644
+--- a/arch/arm/boot/dts/qcom/msm8917-pmi8940-mtp.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8917-pmi8940-mtp.dtsi
+@@ -210,6 +210,10 @@
+ 	qcom,chg-led-support;
+ };
+ 
++&usb_otg {
++       qcom,usbin-vadc = <&pmi8940_vadc>;
++};
++
+ &mdss_dsi0 {
+ 	lab-supply = <&lab_regulator>;
+ 	ibb-supply = <&ibb_regulator>;
+diff --git a/arch/arm/boot/dts/qcom/msm8937-pmi8940-mtp.dtsi b/arch/arm/boot/dts/qcom/msm8937-pmi8940-mtp.dtsi
+index 4a4396b..6d04482 100644
+--- a/arch/arm/boot/dts/qcom/msm8937-pmi8940-mtp.dtsi
++++ b/arch/arm/boot/dts/qcom/msm8937-pmi8940-mtp.dtsi
+@@ -52,6 +52,10 @@
+ 	qcom,chg-led-support;
+ };
+ 
++&usb_otg {
++       qcom,usbin-vadc = <&pmi8940_vadc>;
++};
++
+ &mdss_dsi0 {
+ 	lab-supply = <&lab_regulator>;
+ 	ibb-supply = <&ibb_regulator>;
